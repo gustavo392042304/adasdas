@@ -6,7 +6,7 @@ on:
 jobs:
   rdp:
     runs-on: windows-latest
-    timeout-minutes: 3600  # máximo do GitHub Actions 
+    timeout-minutes: 360
 
     steps:
       - name: Enable RDP
@@ -19,21 +19,28 @@ jobs:
           net user rdpuser P@ssw0rd123! /add
           net localgroup administrators rdpuser /add
 
+      - name: Download Tailscale
+        run: |
+          powershell -Command "Invoke-WebRequest https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale.exe"
+
       - name: Install Tailscale
         run: |
-          powershell -Command "iwr https://tailscale.com/install.ps1 -UseBasicParsing | iex"
+          powershell -Command "Start-Process .\tailscale.exe -ArgumentList '/S' -Wait"
 
       - name: Start Tailscale
         env:
           TS_AUTHKEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
         run: |
-          tailscale up --authkey=$env:TS_AUTHKEY --hostname=github-rdp --accept-dns=false
+          "C:\Program Files\Tailscale\tailscale.exe" up `
+            --authkey=$env:TS_AUTHKEY `
+            --hostname=github-rdp `
+            --accept-dns=false
 
       - name: Show Tailscale IP
         run: |
-          tailscale ip -4
+          "C:\Program Files\Tailscale\tailscale.exe" ip -4
 
       - name: Keep Alive
         run: |
-          echo "RDP ativo. Job ficará ligado até o limite."
+          echo "RDP ativo. Job ficará rodando até o limite do GitHub Actions."
           timeout /t 21600
