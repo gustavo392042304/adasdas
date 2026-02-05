@@ -31,16 +31,17 @@ jobs:
         env:
           TS_AUTHKEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
         run: |
-          "C:\Program Files\Tailscale\tailscale.exe" up `
+          & "C:\Program Files\Tailscale\tailscale.exe" up `
             --authkey=$env:TS_AUTHKEY `
             --hostname=github-rdp `
             --accept-dns=false
 
       - name: Show Tailscale IP
         run: |
-          "C:\Program Files\Tailscale\tailscale.exe" ip -4
+          & "C:\Program Files\Tailscale\tailscale.exe" ip -4
 
       - name: Keep Alive
         run: |
-          echo "RDP ativo. Job ficará rodando até o limite do GitHub Actions."
+          echo "RDP ativo até o limite do runner."
           timeout /t 21600
+
