@@ -1,0 +1,39 @@
+name: Windows RDP via Tailscale (Teste)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rdp:
+    runs-on: windows-latest
+    timeout-minutes: 3600  # máximo do GitHub Actions 
+
+    steps:
+      - name: Enable RDP
+        run: |
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+          netsh advfirewall firewall set rule group="remote desktop" new enable=yes
+
+      - name: Create RDP User
+        run: |
+          net user rdpuser P@ssw0rd123! /add
+          net localgroup administrators rdpuser /add
+
+      - name: Install Tailscale
+        run: |
+          powershell -Command "iwr https://tailscale.com/install.ps1 -UseBasicParsing | iex"
+
+      - name: Start Tailscale
+        env:
+          TS_AUTHKEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          tailscale up --authkey=$env:TS_AUTHKEY --hostname=github-rdp --accept-dns=false
+
+      - name: Show Tailscale IP
+        run: |
+          tailscale ip -4
+
+      - name: Keep Alive
+        run: |
+          echo "RDP ativo. Job ficará ligado até o limite."
+          timeout /t 21600
